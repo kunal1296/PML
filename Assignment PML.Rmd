@@ -1,0 +1,126 @@
+---
+title: "project"
+output:
+  html_document:
+    df_print: paged
+---
+# Summary
+This analysis for the Peer Graded Assignment for the Practical Machine Learning course of the Johns Hopkinsat Coursera. The project uses data from given in the assignment. According to the WLE website, six participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions, identified as classes A, B, C, D and E. Class A corresponds to a correct execution of the exercise, and the remaining five classes identify common mistakes in this weight lifting exercise. Several sensors were used to collect data about the quality of the exercise execution. The goal of this project is to obtain a prediction algorithm that takes such a set of sensor readings and correctly predicts the corresponding class (A to E).
+
+The following analysis uses a random forest prediction algorithm to accomplish this task, after some data cleaning. The results of the analysis confirm that the model provided by this algorithm achieves a high prediction accuracy (as indicated by several prediction quality indicators).
+
+## Loading,Exploration and Cleaning
+Let us begin by reading the pml-training.csv file into R. An initial inspection of the data shows that:
+
+1.The data columns in the file are separated by commas.
+2.There are many missing values. 
+3.The header line contains the names of the variables in the data set.
+4.The first column is not really a variable, it just contains the row number.
+
+```{r , echo=TRUE}
+data<-read.csv("pml-training.csv")
+dim(data)
+names(data)
+
+```
+As you can see, the data has 19622 rows and 160 columns. Most of the variables correspond to sensor readings for one of the four sensors. Those sensor-reading variable names include one of the following strings to identify the corresponding sensor:
+_belt   _arm   _dumbbell   _forearm
+The last column in the data frame (column 160) contains the values A to E of the classe variable that indicates the execution type of the exercise.
+Thus, the data in the first seven columns are not sensor readings. For the prediction purposes of this analysis, we will remove the data in those columns from the data frame. 
+```{r ,echo=TRUE}
+Columns = grep(pattern = "_belt|_arm|_dumbbell|_forearm", names(data))
+clean1<-data[,c(Columns,160)]
+dim(clean1)
+
+```
+Removing Columns having more than 19000 NA Values
+
+```{r , echo=TRUE}
+missingData = is.na(clean1)
+removeColumns = which(colSums(missingData) > 19000)
+clean2 = clean1[, -removeColumns]
+dim(clean2)
+table(complete.cases(clean2))
+```
+## Data Splitting
+
+```{r , echo=TRUE}
+set.seed(7678)
+library(caret)
+inTrain <- createDataPartition(y=clean2$classe, p=0.75, list=FALSE)
+training <- clean2[inTrain,]
+dim(training)
+testing <- clean2[-inTrain,]
+dim(testing)
+```
+1.We are going to apply random forests for classification.
+2.We are not using pca here because we want to know the importance of each variable in this case.
+
+## Training the Model 
+
+```{r , echo=TRUE}
+library(randomForest)
+model<-randomForest(as.factor(classe)~., data=training, ntree = 500)
+```
+The resulting model has very low OOB error. The confusion matrix for the training set indicates that the predictor is accurate on this set.
+
+
+## Applying the model on Test Set and calculating the error estimate
+
+```{r , echo=TRUE}
+
+prediction<-predict(model, newdata = testing)
+testing$classe<-as.factor(testing$classe)
+confusionMatrix(prediction, testing$classe)
+```
+Both the accuracy and the kappa value indicate that the model seems to have a low out of sample error rate.
+```{r , echo=TRUE}
+varImpPlot(model)
+
+
+```
+Further, refining of model can be done according to the importance of each variable.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
